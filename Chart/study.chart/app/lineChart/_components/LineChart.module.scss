@@ -1,0 +1,119 @@
+.lineChart {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background: none;
+    flex-direction: column;
+    font-size: .9rem;
+    justify-content: center;
+
+    > .chartBody {
+        display: flex;
+        flex: 1;
+        justify-content: flex-start;
+        width: 100%;
+        position: relative;
+
+        > .y_axis_container {
+            height: 100%;
+            flex-basis: fit-content;
+            margin-top: -.4rem;
+            padding: 0 .5rem;
+            position: relative;
+
+            > .y_values {
+                display: flex;
+                flex-direction: column;
+                justify-content: right;
+                text-align: right;
+                height: 100%;
+
+                > span {
+                    flex: 1;
+                }
+            }
+        }
+
+        > .chartContainer {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            position: relative;
+
+
+            > .grid {
+                position: relative;
+                display: flex;
+                width: 100%;
+                height: 100%;
+
+                > .grid_column {
+                    flex: 1 1;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+                    position: relative;
+
+                    > .grid_row {
+                        flex: 1 1;
+                        border-width: 1px 1px 0 0;
+                        border-style: solid;
+                        border-color: #dedeea;
+                        box-sizing: content-box;
+                        position: relative;
+                        >.data_label {
+                            position: absolute;
+                            right:100%;
+                            bottom: 0;
+                            transform: translate(-.625rem,50%);
+                        }
+                    }
+                    &:first-of-type {
+                        flex: .5 1;
+                    }
+
+                    &.blank {
+                        flex: .5 1;
+
+                        > .grid_row {
+                            border-right-width: 0;
+                        }
+                    }
+                }
+                > .chart {
+                    width: 100%;
+                    height: 100%;
+                    position: absolute;
+                    > .point {
+                        position: absolute;
+                        display: inline-block;
+                        width: .5rem;
+                        height: .5rem;
+                        transform: translate(-50%, -50%);
+                        background-color: #FB3363FF;
+                        border-radius: .5rem;
+                    }
+                }
+            }
+
+
+
+            > .x_axis_container {
+                flex-grow: 0;
+                //min-width: 0;
+                padding: .5rem 0;
+                width: 100%;
+
+                > .x_values {
+                    height: fit-content;
+                    max-height: 10rem;
+                    display: flex;
+
+                    > span {
+                        flex: 1;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -118,6 +118,17 @@
 
                             }
                         }
+                        &:nth-of-type(3) {
+                        > .area {
+                            fill: url(#purple-gradient);
+
+                        }
+
+                        > .line {
+                            stroke: rgba(151,77,244,.35);
+
+                        }
+                    }
                     }
 
                 }
@@ -149,6 +160,12 @@
                                 background: #3353FBFF;
                             }
                         }
+                        &:nth-of-type(3) {
+                            > .point {
+                                background: #974df4;
+                            }
+                        }
+
                     }
 
                 }
@@ -159,27 +176,25 @@
                     width: 100%;
                     display: flex;
 
+
                     > .mask_column {
-                        //border: 1px solid red;
                         flex: 1;
-                        position: relative;
 
                         > .tooltip_y_axis {
                             width: 1px;
                             border: 1px solid black;
                             height: 100%;
-                            left: 50%;
                             position: absolute;
                         }
 
                         > .toolTip {
-                            position: absolute;
+                            position: relative;
                             display: flex;
                             flex-direction: column;
                             background: #dedeea;
                             border: 1px solid blueviolet;
                             margin-left: 0.25rem;
-                            left: 50%;
+                            left: calc(50% + .25rem);
                         }
                     }
 

@@ -1,7 +1,13 @@
 #GNB {
     border-right: 1px solid lightgray;
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
     > span {
         cursor: pointer;
+        &:hover {
+            color: gray;
+        }
     }
 }

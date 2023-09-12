@@ -1,0 +1,10 @@
+#VennDiagramPage {
+    display: flex;
+    flex-direction: column;
+    > .basic {
+        display: flex;
+        align-items: center;
+        height: 18rem;
+        min-width: 18rem;
+    }
+}

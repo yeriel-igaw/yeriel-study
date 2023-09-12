@@ -1,11 +1,11 @@
 'use client';
 
 import styles from './LineChart.module.scss';
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useLayoutEffect, useMemo} from 'react';
 import {useEffect, useRef, useState, useTransition} from "react";
 import {LabelPosition, LabelPositionType} from "@/tools/Union";
 import {Simulate} from "react-dom/test-utils";
-import mouseOver = Simulate.mouseOver;
+
 
 interface Point {
     x: number;
@@ -26,7 +26,8 @@ interface RefSize {
 
 interface Tooltip {
     index: number;
-    y:number;
+    y: number;
+    x: number;
     content: TooltipContent[];
 }
 
@@ -44,7 +45,7 @@ export default function LineChart() {
     const [pointList, setPointList] = useState<Point[][]>([]);
     const [pathList, setPathList] = useState<Path[][][]>([[]]);
     const [refSize, setRefSize] = useState<RefSize>({width: 0, height: 0});
-    const [toolTip, setToolTip] = useState<Tooltip>({index: -1, y:-1,content: []});
+    const [toolTip, setToolTip] = useState<Tooltip>({index: -1, y: -1, x: -1, content: []});
 
 
     useEffect(() => {
@@ -55,12 +56,16 @@ export default function LineChart() {
     }, []);
 
     const seriesValue = useMemo(() => {
+
         const series1 = Array.from({length: 15}, () => Math.round(Math.random() * 100 * 100) / 100);
         const series2 = Array.from({length: 15}, () => Math.round(Math.random() * 100 * 100) / 100);
-        return [series1, series2];
+        const series3 = [-1,-1,-1,-1,-1,...Array.from({length: 5}, () => Math.round(Math.random() * 100 * 100) / 100),-1,-1,45,20,70];
+
+        return [series1, series2,series3];
     }, []);
 
     const maxValue = useMemo(() => {
+
         const initMax = Math.max(...seriesValue.flat());
         const maxLength = Math.floor(Math.log10(initMax)) || 1;
         const maxRange = Math.pow(10, maxLength);
@@ -81,6 +86,7 @@ export default function LineChart() {
         if (!current) return;
 
         const {width = 0, height = 0} = current.getBoundingClientRect();
+
         const widthPerPoint = width / xValues.length;
         const leftMargin = widthPerPoint / 2;
 
@@ -88,6 +94,9 @@ export default function LineChart() {
 
         const points = seriesValue.map((series, i) =>
             series.reduce((acc: Point[], curr: number, j: number) => {
+                if (curr<0) {
+                    return acc;
+                }
                 const yRatio = 1 - (curr / maxValue);
                 const point: Point = {
                     x: leftMargin + (widthPerPoint * j),
@@ -101,14 +110,23 @@ export default function LineChart() {
 
         setPointList(points);
 
-        const paths = seriesValue.map((series) => {
+        const paths = seriesValue.map((series,k) => {
             let tmpArr: Path[] = [];
             const path = series.reduce((acc: Path[][], curr: number, i) => {
-                const yRatio = 1 - (curr / maxValue);
-                tmpArr.push({
-                    x: leftMargin + (widthPerPoint * i),
-                    y: height * yRatio
-                })
+
+                if (curr>0) {
+                    const yRatio = 1 - (curr / maxValue);
+                    tmpArr.push({
+                        x: leftMargin + (widthPerPoint * i),
+                        y: height * yRatio
+                    })
+                } else {
+                    if (tmpArr.length > 0) {
+                        acc.push(tmpArr);
+                        tmpArr = [];
+                    }
+                }
+
                 if (i === series.length - 1) {
                     acc.push(tmpArr);
                 }
@@ -126,19 +144,26 @@ export default function LineChart() {
         settingPointAndPathLit();
     }, [settingPointAndPathLit]);
 
-    const handleMouseOver = (index: number) => (event: React.MouseEvent<HTMLSpanElement>) => {
+
+    const handleMouseOver = () => (event: React.MouseEvent<HTMLSpanElement>) => {
+        if (maskRef.current === null) return;
+
+        const {width: refWidth, left: refLeft} = maskRef.current.getBoundingClientRect();
+        const {pageX} = event;
+        const xDistance = pageX - refLeft;
+        const perWidth = refWidth / xValues.length;
+        const index = Math.floor(xDistance / perWidth);
+
         const content = seriesValue.reduce((acc: TooltipContent[], curr, i) => {
             const label = i === 0 ? "red" : "blue";
             const value = curr[index];
             acc.push({label, value});
             return acc
         }, []);
-        console.log(index,event.pageY,maskRef.current?.getBoundingClientRect().top);
-        const y = event.pageY - maskRef.current?.getBoundingClientRect().top;
-        setToolTip({index, content,y});
 
-
-
+        const y = event.pageY - maskRef.current.getBoundingClientRect().top;
+        const x = perWidth * index + (perWidth / 2);
+        setToolTip({index, content, y, x});
     }
 
 
@@ -217,13 +242,14 @@ export default function LineChart() {
                 {pointList.length > 0 && pointList.map((point: Point[], index) => {
                     return <div className={`${styles.point_group}`} key={`point-${index}`}>
                         {point.map((p, i) => {
+                           if (p.y<0 ) return;
                             return <span className={`${styles.point} ${styles[`group_${index}`]}`}
                                          key={`point-${index}-${i}`}
                                          style={{
                                              top: `${p.y}px`,
                                              left: `${p.x}px`
                                          }}><span>{p.num}</span>
-                </span>
+                            </span>
                         })
                         }</div>
                 })}
@@ -231,24 +257,25 @@ export default function LineChart() {
         }, [pointList]
     );
 
+
     const renderOverMask = () => {
-        return <div className={`${styles.mask}`} ref={maskRef}>
+        return <div className={`${styles.mask}`} ref={maskRef} onMouseMove={handleMouseOver()}
+                    onMouseLeave={()=>{setToolTip({index: -1, y: -1, x: -1, content: []})}}>
             {xValues.map((mask, i) => {
-                return <span key={`mask-${i}`} className={`${styles.mask_column}`}
-                             onMouseMove={handleMouseOver(i)}
-                onMouseLeave={()=>setToolTip({index:-1,y:-1,content:[]})}>
-                                {i === toolTip.index && <> <span className={`${styles.tooltip_y_axis}`}/>
-                                    <div className={`${styles.toolTip}`} style={{top:toolTip.y}}>
-                                        {
-                                            toolTip.content.map((c, j) => {
-                                                return <span key={`tooltip-content-${j}`}>
-                                                    <label>{c.label}</label>
-                                                    <span>{c.value}</span>
-                                                </span>
-                                            })}
-                                    </div>
-                                </>}
-            </span>
+                return <span key={`mask-${i}`} className={`${styles.mask_column}`}>
+                            {i === toolTip.index && <> <span className={`${styles.tooltip_y_axis}`}
+                                                             style={{left: toolTip.x - 1}}/>
+                                <div className={`${styles.toolTip}`} style={{top: toolTip.y}}>
+                                    {
+                                        toolTip.content.map((c, j) => {
+                                            return <span key={`tooltip-content-${j}`}>
+                                                <label>{c.label}</label>
+                                                <span>{c.value}</span>
+                                            </span>
+                                        })}
+                                </div>
+                            </>}
+                    </span>
             })}
 
         </div>
